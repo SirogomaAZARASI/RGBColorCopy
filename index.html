@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RGB色一覧20刻み+255</title>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#111;
+  color:#fff;
+
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* 上部UI */
+.controls{
+  position:sticky;
+  top:0;
+  background:#111;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  z-index:10;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  background:#fff;
+  color:#000;
+  font-size:12px;
+}
+
+button.active{
+  background:#4caf50;
+  color:#fff;
+}
+
+/* グリッド */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(14,1fr);
+  flex:1;
+}
+
+/* 色 */
+.color{
+  width:100%;
+  aspect-ratio:1;
+}
+
+/* トースト */
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#000;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:8px;
+  opacity:0;
+  transition:0.3s;
+}
+.toast.show{
+  opacity:1;
+}
+
+h1{
+  margin:10px;
+  font-size:16px;
+}
+
+/* 履歴 */
+.history{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:10px;
+}
+
+.history div{
+  width:30px;
+  height:30px;
+  border:1px solid #555;
+}
+
+/* フッター */
+.footer{
+  text-align:center;
+  padding:20px 10px;
+  font-size:12px;
+  color:#aaa;
+}
+</style>
+</head>
+
+<body>
+
+<h1>タップでコピー<br>形式を選んでください<br>↓↓↓↓↓↓↓↓</h1>
+
+<div class="controls">
+  <button id="btnRGB" class="active" onclick="setMode('rgb')">R,G,B</button>
+  <button id="btnHEX" onclick="setMode('hex')">HEX</button>
+</div>
+
+<!-- 履歴 -->
+<h2 style="margin:10px;font-size:14px;">コピー履歴</h2>
+<div id="history" class="history"></div>
+
+<!-- 色一覧 -->
+<div class="grid" id="grid"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let mode = "rgb";
+
+/* モード切替 */
+function setMode(m){
+  mode = m;
+
+  document.getElementById("btnRGB").classList.remove("active");
+  document.getElementById("btnHEX").classList.remove("active");
+
+  if(m === "rgb"){
+    document.getElementById("btnRGB").classList.add("active");
+  }else{
+    document.getElementById("btnHEX").classList.add("active");
+  }
+}
+
+/* トースト */
+function showToast(text){
+  const t = document.getElementById("toast");
+  t.textContent = "コピー: " + text;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1500);
+}
+
+/* HEX変換 */
+function toHex(r,g,b){
+  return "#" +
+    r.toString(16).padStart(2,"0") +
+    g.toString(16).padStart(2,"0") +
+    b.toString(16).padStart(2,"0");
+}
+
+/* 履歴取得 */
+function getHistory(){
+  return JSON.parse(localStorage.getItem("colorHistory") || "[]");
+}
+
+/* 履歴保存 */
+function saveHistory(arr){
+  localStorage.setItem("colorHistory", JSON.stringify(arr));
+}
+
+/* 履歴追加 */
+function addHistory(color){
+  let history = getHistory();
+
+  history = history.filter(c => c !== color);
+  history.unshift(color);
+  history = history.slice(0,30);
+
+  saveHistory(history);
+  renderHistory();
+}
+
+/* 履歴表示 */
+function renderHistory(){
+  const box = document.getElementById("history");
+  box.innerHTML = "";
+
+  const history = getHistory();
+
+  history.forEach(color=>{
+    let div = document.createElement("div");
+
+    if(color.startsWith("#")){
+      div.style.background = color;
+    }else{
+      div.style.background = `rgb(${color})`;
+    }
+
+    div.onclick = () => {
+      navigator.clipboard.writeText(color);
+      showToast(color);
+    };
+
+    box.appendChild(div);
+  });
+}
+
+/* コピー */
+function copyColor(r,g,b){
+  let text;
+
+  if(mode === "rgb"){
+    text = `${r},${g},${b}`;
+  }else{
+    text = toHex(r,g,b);
+  }
+
+  navigator.clipboard.writeText(text);
+  showToast(text);
+
+  addHistory(text);
+}
+
+/* 値リスト */
+const values = [];
+for(let i=0; i<=240; i+=20){
+  values.push(i);
+}
+values.push(255);
+
+/* 描画 */
+const grid = document.getElementById("grid");
+
+for(let r of values){
+  for(let g of values){
+    for(let b of values){
+
+      let div = document.createElement("div");
+      div.className = "color";
+      div.style.background = `rgb(${r},${g},${b})`;
+      div.onclick = () => copyColor(r,g,b);
+
+      grid.appendChild(div);
+    }
+  }
+}
+
+/* 初期表示 */
+renderHistory();
+</script>
+
+<footer class="footer">
+  Copyright © 2026 SirogomaAZARASI All rights reserved.
+</footer>
+
+</body>
+</html>
