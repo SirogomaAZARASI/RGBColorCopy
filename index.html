@@ -158,7 +158,7 @@ button.active{
 <div class="controls" id="controls">
   <div class="controlsText">コピー形式を選択→</div>
 
-  <button id="btnRGB" class="active">R,G,B</button>
+  <button id="btnRGB" class="active">R.G.B</button>
   <button id="btnHEX">HEX</button>
 </div>
 
@@ -216,7 +216,7 @@ function toHex(r,g,b){
 }
 
 function copyColor(r,g,b){
-  let text = mode==="rgb"?`${r},${g},${b}`:toHex(r,g,b);
+  let text = mode==="rgb"?`${r}.${g}.${b}`:toHex(r,g,b);
   navigator.clipboard.writeText(text);
   showToast(text);
 }
